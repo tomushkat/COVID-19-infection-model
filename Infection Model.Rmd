@@ -68,17 +68,16 @@ The third argument is a bar plot figure. The figure is split to two by rounds (b
 
 The function was built using R software, 3.6.3 version, with the package tidyverse.
 
-
 ```{r}
 infectionModel <- function(Groups = 4, Members = 4, initialProbToIll = 0.5, numberOfMeetings = 2){
   
   library(tidyverse)
   
-  adjPToIll <- function(iPTI = initialProbToIll, N = data3){
+  adjPToIll <- function(iPTI = initialProbToIll, N){
     Sick <- 1
-    L <- length(N == Sick)
+    L <- sum(as.numeric(N == Sick))
     S <- 0
-    for (i in 1:length(L)){
+    for (i in 1:L){
       S <- S + iPTI ^ i
     }
     return(S)
@@ -104,7 +103,7 @@ infectionModel <- function(Groups = 4, Members = 4, initialProbToIll = 0.5, numb
         data2 <- Data$Condition[Data$Group == group + 1][1]
         data3 <- c(data1, data2)
         if (Sick %in% data3){
-          adjustProbToIll3 <- adjPToIll()
+          adjustProbToIll3 <- adjPToIll(iPTI = initialProbToIll, N = data3)
           data1  <- ifelse(data1 == Healthy, sample(c(Sick, Healthy), length(data1 == Healthy), replace = TRUE, prob = c(adjustProbToIll3, 1 - adjustProbToIll3)), data1)
           Data$Condition[Data$Group == group] <- data1
           Data$Condition[Data$Group == group + 1][1] <- ifelse(data2 == Healthy, sample(c(Sick, Healthy), 1, replace = TRUE, prob = c(adjustProbToIll3, 1 - adjustProbToIll3)), data2)
@@ -114,7 +113,7 @@ infectionModel <- function(Groups = 4, Members = 4, initialProbToIll = 0.5, numb
         data2 <- Data$Condition[Data$Group == 1][1]
         data3 <- c(data1, data2)
         if (Sick %in% data3){
-          adjustProbToIll3 <- adjPToIll()
+          adjustProbToIll3 <- adjPToIll(iPTI = initialProbToIll, N = data3)
           data1  <- ifelse(data1 == Healthy, sample(c(Sick, Healthy), length(data1 == Healthy), replace = TRUE, prob = c(adjustProbToIll3, 1 - adjustProbToIll3)), data1)
           Data$Condition[Data$Group == group] <- data1
           Data$Condition[Data$Group == group + 1][1] <- ifelse(data2 == Healthy, sample(c(Sick, Healthy), 1, replace = TRUE, prob = c(adjustProbToIll3, 1 - adjustProbToIll3)), data2)
@@ -157,6 +156,7 @@ infectionModel <- function(Groups = 4, Members = 4, initialProbToIll = 0.5, numb
   finalList <- list(Sentence, figureData, Figure)
   return(finalList)
 }
+
 ```
 
 **Printing the model with default parameters.**
