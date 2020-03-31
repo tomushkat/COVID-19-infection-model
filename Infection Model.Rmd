@@ -77,11 +77,13 @@ infectionModel <- function(Groups = 4, Members = 4, initialProbToIll = 0.5, numb
     Sick <- 1
     L <- sum(as.numeric(N == Sick))
     S <- 0
-    for (i in 1:L){
-      S <- S + iPTI ^ i
+    if (L > 0){
+      for (i in 1:L){
+        S <- S + iPTI ^ i
+      }
     }
     return(S)
-  }
+}
   
   Group <- c()
   for (member in c(1:Groups)){
