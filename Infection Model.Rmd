@@ -49,7 +49,7 @@ The first argument is a summarised sentence:
 'Healthy-Sick ratio at the start is ... but the ratio after the meetings, with ...'Members' + 1... participants in a meeting, only one jointed friend for every group, initial probability of ...'initialProbToIll'... to get sick, and ...'numberOfMeeting'... rounds of meetings, is ...'
 
 The second argument is a data frame. 
-Column 1 is the group ID, column 2 symbolized if the data is before or after the meetings, column 3 is the condition in words (sick or healthy), column 4 is the numeric of participnats in each condition, column 5 is the ratio of the infected/unifected within each group.
+Column 1 is the group ID, column 2 symbolized if the data is before or after the meetings, column 3 is the condition in words (sick or healthy), column 4 is the number of participntas in each condition, column 5 is the ratio of the infected/unifected within each group.
 
 The third argument is a bar plot figure. The figure is split to two by rounds (before and after the meetings). In the x-axis is the Group, in the y-axis is the ratio per group of sick or healthy, the color is sick (grey) or healthy (blue).
 
