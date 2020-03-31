@@ -1,0 +1,184 @@
+---
+title: "Infection model implementation on R, under loose quarantine conditions"
+author: "Tom Mushkat"
+date: "3/26/2020"
+output: html_document
+---
+
+***The model goal.***
+
+Following the increase in the number of patients with the Corona virus (COVID-19), the Israeli Ministry of Health has taken social isolation measures known to reduce the number of infections. Despite the rising number of patients, there are people who violate the Ministry of Health's orders and meet in a limited format of friends, thinking that this form is safe. Assuming that each group of friends meets exclusively between themselves, the virus cannot be spread in the population. However, people have more complex relationships than a limited friendship format. This model is designed to show in a simple and naïve way how a virus passes through many groups, even when each group has only one member in common with another group, and when only one person is ill at the beginning of the model.
+
+***Model illustration.***
+
+
+![](C:/Tom/ML/Prob to ill function/Illustration.jpg)
+
+***Arguments.***
+
+The function gets four argument:
+
+(1) 'Members' - The number of friends in a group (default = 4).
+
+(2) 'Groups' - The number of groups (default = 4).
+
+(3) 'initialProbToIll' - The initial probability to ill at one on one meeting (default = 0.5).
+
+(4) 'numberOfMeetings' - The number of meetings per group (default = 2).
+
+***The basic idea.***
+
+Every group meets separately from the other groups. The first member of each group also meets with the members of the previous group. e.g. when the members of group n.1 meet, the first member of the second group joins them. This is the connection between all the groups. In every meeting, if there is a sick member at the meeting, there is a probability to get sick during the meeting. The probability is the 'initialProbToIll' inserted into a geometric sequence, where the probability to get sick is influenced by the number of sick people in the meeting and the 'initialProbToIll'. 
+
+When 'S' is the number of sick participants in the meeting:
+
+$$probToBeSick = \sum_{i=1}^{S}  initialProbToIll ^ S$$
+
+The function calculates the ratio of the ill participants before the meetings start, and the ratio after the meetings end.
+The function starts running when the first participant in the first group is the only sick participant.
+
+***The procedure.***
+
+The functions strats when the only sick member is in group number 1.
+In a loop with 'numberOfMeetings' rounds, the function subset every group from the data and adds the next group neighbor participant. If there is an ill participant in the meeting, the function sample the healthy participants and return them with the adjusted probability to be sick. 
+
+***Return.***
+
+The function returns a list with three arguments.
+The first argument is a summarised sentence:
+'Healthy-Sick ratio at the start is ... but the ratio after the meetings, with ...'Members' + 1... participants in a meeting, only one jointed friend for every group, initial probability of ...'initialProbToIll'... to get sick, and ...'numberOfMeeting'... rounds of meetings, is ...'
+
+The second argument is a data frame. 
+Column 1 is the group ID, column 2 symbolized if the data is before or after the meetings, column 3 is the condition in words (sick or healthy), column 4 is the numeric of participnats in each condition, column 5 is the ratio of the infected/unifected within each group.
+
+The third argument is a bar plot figure. The figure is split to two by rounds (before and after the meetings). In the x-axis is the Group, in the y-axis is the ratio per group of sick or healthy, the color is sick (grey) or healthy (blue).
+
+***Notes***
+
+1) The function's basic assumption is independence during the meetings. Namely, the function assumes that each participant in a meeting speaks with all the participants in the meeting at the same conditions.
+
+2) The number of the default number for members in a group (N = 4) was chosen in order to creates meetings of 5 people - the restrictions of  Israel's Ministry of Health at the time the function was written.
+
+3) The initial probability to ill default value was arbitrary chosen.
+
+4) It is unrecommended to change the number of meetings ('numberOfMeetings'). The function does not consider the situation when sick participants start to show symptoms and stop meeting. The more meetings, the more the outcome be influenced to generate sick participants. 
+
+
+**The fucntion.**
+
+The function was built using R software, 3.6.3 version, with the package tidyverse.
+
+
+```{r}
+infectionModel <- function(Groups = 4, Members = 4, initialProbToIll = 0.5, numberOfMeetings = 2){
+  
+  library(tidyverse)
+  
+  adjPToIll <- function(iPTI = initialProbToIll, N = data3){
+    Sick <- 1
+    L <- length(N == Sick)
+    S <- 0
+    for (i in 1:length(L)){
+      S <- S + iPTI ^ i
+    }
+    return(S)
+  }
+  
+  Group <- c()
+  for (member in c(1:Groups)){
+    g     <- as.numeric(rep(member, Members))
+    Group <- c(Group, g)
+  }
+  Sick        <- 1
+  Healthy     <- 2
+  Condition   <- c(Sick, rep(Healthy, length(Group) - 1))
+  Data        <- data.frame(Group, Condition)
+  initialData <- Data
+  
+  beforeTheMeetings <- round(length(Data$Group[Data$Condition == Sick]) / length(Data$Group), 2)
+  
+  for (round in 1:numberOfMeetings){
+    for (group in 1:Groups){
+      if (group < Groups){
+        data1 <- Data$Condition[Data$Group == group]
+        data2 <- Data$Condition[Data$Group == group + 1][1]
+        data3 <- c(data1, data2)
+        if (Sick %in% data3){
+          adjustProbToIll3 <- adjPToIll()
+          data1  <- ifelse(data1 == Healthy, sample(c(Sick, Healthy), length(data1 == Healthy), replace = TRUE, prob = c(adjustProbToIll3, 1 - adjustProbToIll3)), data1)
+          Data$Condition[Data$Group == group] <- data1
+          Data$Condition[Data$Group == group + 1][1] <- ifelse(data2 == Healthy, sample(c(Sick, Healthy), 1, replace = TRUE, prob = c(adjustProbToIll3, 1 - adjustProbToIll3)), data2)
+        }
+      }else{
+        data1 <- Data$Condition[Data$Group == group]
+        data2 <- Data$Condition[Data$Group == 1][1]
+        data3 <- c(data1, data2)
+        if (Sick %in% data3){
+          adjustProbToIll3 <- adjPToIll()
+          data1  <- ifelse(data1 == Healthy, sample(c(Sick, Healthy), length(data1 == Healthy), replace = TRUE, prob = c(adjustProbToIll3, 1 - adjustProbToIll3)), data1)
+          Data$Condition[Data$Group == group] <- data1
+          Data$Condition[Data$Group == group + 1][1] <- ifelse(data2 == Healthy, sample(c(Sick, Healthy), 1, replace = TRUE, prob = c(adjustProbToIll3, 1 - adjustProbToIll3)), data2)
+          
+        }
+      }
+    }
+  }
+  afterTheMeetings <- round(length(Data$Group[Data$Condition == Sick]) / length(Data$Group), 2)
+  
+  Sentence <- paste('Healthy-Sick ratio at start is', beforeTheMeetings,
+                    'but the ratio after the meetings, with', Members + 1,
+                    'participants in a meeting, only one jointed friend for every group, initial probability of', initialProbToIll,
+                    'to get sick, and', numberOfMeetings,
+                    'rounds of meetings, is', afterTheMeetings)
+  
+  figureData <- rbind(initialData, Data)
+  figureData <- figureData %>%
+    mutate(wCondition  = ifelse(Condition == 1, 'Sick', 'Healthy'),
+           Round       = c(rep("beforeMeetings", length(Condition) / 2), rep('afterMeetings', length(Condition) / 2)),
+           Group = as.factor(Group))
+  
+  figureData <- as.data.frame(figureData %>%
+                                group_by(Group, Round, wCondition) %>%
+                                summarise(sickOrHealthy = length(wCondition),
+                                          Ratio         = round(100 * sickOrHealthy / Members, 2)))
+  
+  Figure <- figureData %>% 
+    ggplot(aes(y = Ratio, x = Group, fill = wCondition)) +
+    geom_bar(stat = "identity", color = "black") +  
+    scale_fill_manual(values = c("#56B4E9", "#999999")) +
+    facet_wrap(~Round) + 
+    theme(axis.line.y = element_line(color = "black", size = 1),
+          axis.line.x = element_line(color = "black", size = 1)) +
+    theme(axis.text = element_text(size = 14),
+          axis.title = element_text(size = 16, face = "bold")) +
+    theme(legend.text = element_text(size = 14)) + 
+    theme_classic() + ylab("Conditions ratio in a group")
+  
+  finalList <- list(Sentence, figureData, Figure)
+  return(finalList)
+}
+```
+
+**Printing the model with default parameters.**
+
+```{r}
+functionTest <- infectionModel()
+```
+
+**Summarised sentence**
+
+```{r}
+print(functionTest[[1]])
+```
+
+**Final table**
+
+```{r}
+print(functionTest[[2]])
+```
+
+**Figure**
+
+```{r}
+print(functionTest[[3]])
+```
